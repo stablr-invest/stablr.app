@@ -88,14 +88,20 @@ export const Header: React.FC = () => {
 
           {/* Right side */}
           <div className="flex items-center space-x-2">
-            <div className="hidden md:flex items-center space-x-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl">
-              <Receipt className="h-4 w-4 text-slate-600" />
+            <a
+              href="https://dune.com/stablr/stablr"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden md:flex items-center space-x-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl hover:bg-slate-100 transition-colors"
+              title="View on Dune Analytics"
+            >
+              <img src="/dune-logo.svg" alt="Dune" className="h-4 w-4 p-0 object-contain" />
               <span className="text-xs text-slate-600">Total Value Deposited</span>
               <span className="text-sm font-semibold text-slate-900">
                 {isLoadingTotalValue ? '…' : (totalValueDeposited ?? '—')}
               </span>
-            </div>
-
+            </a>
+            
             <a
               href="https://x.com/stablrapp"
               target="_blank"
