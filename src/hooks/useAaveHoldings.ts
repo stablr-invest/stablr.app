@@ -320,8 +320,12 @@ export const useAaveHoldings = (userAddress: string | null) => {
         const knownDecimals: Record<string, number> = {};
         list.forEach(h => {
           const sym = h.asset?.toUpperCase?.();
-          if ((sym === 'USDC' || sym === 'USDT') && h.underlyingAsset && h.underlyingAsset.length === 42) {
-            knownDecimals[h.aTokenAddress] = 6;
+          if (sym === 'USDC' || sym === 'USDT') {
+            // On BNB chain stables are 18 decimals; elsewhere assume 6
+            const assumed = h.chainId === 56 ? 18 : 6;
+            if (h.underlyingAsset && h.underlyingAsset.length === 42) {
+              knownDecimals[h.aTokenAddress] = assumed;
+            }
           }
         });
 
@@ -413,10 +417,12 @@ export const useAaveHoldings = (userAddress: string | null) => {
           await Promise.all(missing.map(async (h) => {
             try {
               const atoken = new Contract(h.aTokenAddress, ATOKEN_ABI, provider);
+              const isUsdLike = h.asset?.toUpperCase?.() === 'USDC' || h.asset?.toUpperCase?.() === 'USDT';
+              const assumedDecimals = isUsdLike ? (h.chainId === 56 ? 18 : 6) : undefined;
               const [scaledRaw, balanceRaw, dec]: [import('ethers').BigNumber, import('ethers').BigNumber, number] = await Promise.all([
                 atoken.scaledBalanceOf(userAddress),
                 atoken.balanceOf(userAddress),
-                Promise.resolve((h.asset?.toUpperCase?.() === 'USDC' || h.asset?.toUpperCase?.() === 'USDT') ? 6 : await atoken.decimals())
+                Promise.resolve(assumedDecimals ?? await atoken.decimals())
               ]);
               let prevIndex: import('ethers').BigNumber | null = null;
               try { const fn = (atoken as unknown as { getPreviousIndex?: (u: string) => Promise<import('ethers').BigNumber> }).getPreviousIndex; if (fn) prevIndex = await fn(userAddress); } catch { /* ignore */ }

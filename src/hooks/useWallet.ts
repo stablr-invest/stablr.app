@@ -231,17 +231,19 @@ export const useWallet = () => {
               resp[0]?.success ? iface.decodeFunctionResult('balanceOf', resp[0].returnData)[0] as ethers.BigNumber : ethers.BigNumber.from(0),
               resp[1]?.success ? iface.decodeFunctionResult('balanceOf', resp[1].returnData)[0] as ethers.BigNumber : ethers.BigNumber.from(0),
             ];
-            // decimals known for USDC/USDT (6) on most chains; avoid on-chain decimals() call
-            chainBalance.usdc = parseFloat(ethers.utils.formatUnits(usdcRaw, 6));
-            chainBalance.usdt = parseFloat(ethers.utils.formatUnits(usdtRaw, 6));
+            // Decimals for stables: BNB chain uses 18; most others use 6
+            const stableDecimals = chain.id === 56 ? 18 : 6;
+            chainBalance.usdc = parseFloat(ethers.utils.formatUnits(usdcRaw, stableDecimals));
+            chainBalance.usdt = parseFloat(ethers.utils.formatUnits(usdtRaw, stableDecimals));
             chainBalance.isLoading = false;
             return chainBalance;
           } catch {}
         }
 
+        const stableDecimals = chain.id === 56 ? 18 : 6;
         const [usdcBalance, usdtBalance] = await Promise.all([
-          usdcAddress ? getTokenBalance(usdcAddress, wallet.address!, provider, 6) : Promise.resolve(0),
-          usdtAddress ? getTokenBalance(usdtAddress, wallet.address!, provider, 6) : Promise.resolve(0)
+          usdcAddress ? getTokenBalance(usdcAddress, wallet.address!, provider, stableDecimals) : Promise.resolve(0),
+          usdtAddress ? getTokenBalance(usdtAddress, wallet.address!, provider, stableDecimals) : Promise.resolve(0)
         ]);
 
         chainBalance.usdc = usdcBalance;
